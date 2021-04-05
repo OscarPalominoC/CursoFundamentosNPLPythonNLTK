@@ -299,3 +299,7 @@ plt.plot(a)
 * Como vimos en la sección anterior, los tokens más frecuentes en un texto no son necesariamente las palabras que mas informacion nos arrojan sobre el contenido del mismo. 
 * Por ello, es mejor filtrar y construir distribuciones de frecuencia que no consideren signos de puntuación o caracteres especiales
 
+
+[Archivo Google Colab](https://colab.research.google.com/drive/1_35vfOLiNI-0Gulg0EpOM2lXfI6OIHMO?usp=sharing)
+
+[Archivo local](/code/02_text_vocab_stats.ipynb)
