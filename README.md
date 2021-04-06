@@ -12,6 +12,7 @@ Francisco Camacho
 * [Notebook: Configuración Quickstart NLTK](/code/01_configuracion_quickstart.ipynb)
 * [Notebook: Texto y vocabulario con estadística](/code/02_text_vocab_stats.ipynb)
 * [Notebook: Lenguaje con estadística](/code/03_lenguaje_con_estadistica.ipynb)
+* [Notebook: Recursos Léxicos](/code/04_recursos_lexicos.ipynb)
 
 ## Índice
 
@@ -719,3 +720,6 @@ translate['dog']
 
 Ya con esto tenemos la capacidad de usar recursos léxicos que nos permiten traducir de un idioma específico a otro. **¿Cómo podemos usar esto de forma más interesante?** Podemos conectar esto con otros conceptos de clases previas, imagina que estamos haciendo procesamiento de texto en un idioma diferente al propio, y lo que se quiere es generar tokenizadores de esos textos, tokenizar las palabras, filtrar stopwords y luego con las palabras relevantes, saber cuáles son las más mencionadas.
 
+[Archivo Colab](https://colab.research.google.com/drive/1N-2fp7ku1V68kEMbpFU-CDyCjcqAPyNF?usp=sharing)
+
+[Archivo local](/code/04_recursos_lexicos.ipynb)
