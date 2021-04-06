@@ -8,7 +8,10 @@ Francisco Camacho
 
 ## Archivos
 
-[Slides](/files/slides.pdf)
+* [Slides](/files/slides.pdf)
+* [Notebook: Configuración Quickstart NLTK](/code/01_configuracion_quickstart.ipynb)
+* [Notebook: Texto y vocabulario con estadística](/code/02_text_vocab_stats.ipynb)
+* [Notebook: Lenguaje con estadística](/code/03_lenguaje_con_estadistica.ipynb)
 
 ## Índice
 
@@ -23,6 +26,14 @@ Francisco Camacho
     * [Estadísticas básicas del lenguaje](#estadísticas-básicas-del-lenguaje)
     * [Distribuciónes de frecuencia de palabras](#distribuciónes-de-frecuencia-de-palabras)
     * [Refinamiento y visualización de cuerpos de texto](#refinamiento-y-visualización-de-cuerpos-de-texto)
+    * [N-gramas y Colocaciones del lenguaje](#n-gramas-y-colocaciones-del-lenguaje)
+    * [¿Cómo extraer n-gramas de un texto en Python?](#cómo-extraer-n-gramas-de-un-texto-en-python)
+    * [Colocaciones en Python](#colocaciones-en-python)
+    * [Colocaciones en gráficos de dispersión](#colocaciones-en-gráficos-de-dispersión)
+    * [Filtros y colocaciones en NLTK](#filtros-y-colocaciones-en-nltk)
+    * [Introducción a los recursos léxicos](#introducción-a-los-recursos-léxicos)
+    * [Recursos léxicos en NLTK](#recursos-léxicos-en-nltk)
+    * [NLTK para traducción de palabras](#nltk-para-traducción-de-palabras)
 
 ---
 
@@ -121,6 +132,8 @@ Un token es un conjunto de caracteres que representan texto. También podemos de
 La tokenización es un paso que divide cadenas de texto más largas en piezas más pequeñas o tokens. Los trozos de texto más grandes pueden ser convertidos en oraciones, las oraciones pueden ser tokenizadas en palabras, etc. El procesamiento adicional generalmente se realiza después de que una pieza de texto ha sido apropiadamente concatenada. La tokenización también se conoce como segmentación de texto o análisis léxico. A veces la segmentación se usa para referirse al desglose de un gran trozo de texto en partes más grandes que las palabras (por ejemplo, párrafos u oraciones), mientras que la tokenización se reserva para el proceso de desglose que se produce exclusivamente en palabras.
 
 ## Palabras, textos y vocabularios
+
+* **Vocabulario**: Son las palabras únicas en un corpus.
 
 ![Cheat sheet REGEX](/images/regex.jpg)
 
@@ -303,3 +316,406 @@ plt.plot(a)
 [Archivo Google Colab](https://colab.research.google.com/drive/1_35vfOLiNI-0Gulg0EpOM2lXfI6OIHMO?usp=sharing)
 
 [Archivo local](/code/02_text_vocab_stats.ipynb)
+
+## N-gramas y Colocaciones del lenguaje
+
+Es una secuencia de n palabras consecutivas.
+
+### Bi-gramas
+
+Secuencia de 2 palabras consecutivas.
+
+*Estoy aprendiendo cosas increíbles* -> `(Estoy, aprendiendo), (aprendiendo, cosas), (cosas, increíbles)`.
+
+### Tri-gramas
+
+Secuencia de 3 palabras consecutivas.
+
+*Estoy aprendiendo cosas increíbles* -> `(Estoy, aprendiendo, cosas), (aprendiendo, cosas, increíbles)`.
+
+### Colocaciones
+
+> Las colocaciones de una palabra son sentencias que indican los lugares que acostumbra a tomar esa palabra en el lenguaje (sin seguir las reglas del lenguaje) .... Firth (1957), Modes in Meaning - Paper in Linguistics
+
+*Le dieron ganas de dormir. Le introdujeron ganas de dormir*. Estas 2 oraciones dicen exactamente lo mismo, sin embargo, la segunda suena menos natural en el lenguaje. La primera suena más natural, PERO, no hay una regla específica o concreta en el lenguaje que nos diga que es correcto usar 'dieron' en vez de 'introdujeron'. Técnicamente ambas están igual de usadas de usadas en un sentido equivocado, pero por razones culturales usamos la palabra dieron, esto es una manera de colocación, Es una palabra que aparece con una frecuencia inusual en una cierta ubicación de las frases y esto no tiene una explicación basada en una regla del lenguaje.
+
+*Ventilar secretos*. Es una frase común en países hispano-hablantes, quiere decir que estás revelando un secreto que se supone no se debe decir a nadie.
+
+Debido a que las colocaciones están basadas en la cultura no existen reglas estrictas en el lenguaje para que se utilicen de la manera que se hacen, sin embargo, vamos a ver estadísticas que nos permiten identificar de forma numérica usando colocaciones del lenguaje.
+
+## ¿Cómo extraer n-gramas de un texto en Python?
+
+Primero importamos las librerías que vamos a utilizar.
+```py
+import nltk
+nltk.download('book')
+from nltk.book import * 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import plotly.express as px
+```
+
+**Bi-gramas**: Parejas de palabras que ocurren consecutivas.
+
+Creamos los bigramas y utilizamos FreqDist para hallar la distribución de frecuencias.
+```py
+md_bigrams = list(bigrams(text1))
+fdist = FreqDist(md_bigrams)
+fdist.most_common(20)
+"""
+[((',', 'and'), 2607),
+ (('of', 'the'), 1847),
+ (("'", 's'), 1737),
+ (('in', 'the'), 1120),
+ ((',', 'the'), 908),
+ ((';', 'and'), 853),
+ (('to', 'the'), 712),
+ (('.', 'But'), 596),
+ ((',', 'that'), 584),
+ (('.', '"'), 557),
+ ((',', 'as'), 523),
+ ((',', 'I'), 461),
+ ((',', 'he'), 446),
+ (('from', 'the'), 428),
+ ((',', 'in'), 402),
+ (('of', 'his'), 371),
+ (('the', 'whale'), 369),
+ (('.', 'The'), 369),
+ (('and', 'the'), 357),
+ ((';', 'but'), 340)]
+ """
+ ```
+ Graficamos la distribución actual.
+```py
+fdist.plot(20)
+```
+![FreqDist most common](/images/freqdist-common.png)
+
+Sin embargo esto no es muy eficiente, puesto que cuenta con conectores y signos de puntuación, por lo tanto, debemos filtrarlos y aplicar nuevamente la distribución de frecuencias.
+
+### Filtrado de bi-gramas
+
+* Sin embargo, observamos que los bi-gramas más comunes no representan realmente frases o estructuras léxicas de interés.
+* Tal vez, aplicar algún tipo de filtro nos permita ver estructuras relevantes
+```py
+threshold = 2
+filtered_bigrams = [bigram for bigram in md_bigrams if len(bigram[0])>threshold and len(bigram[1])>threshold]
+filtered_dist = FreqDist(filtered_bigrams)
+filtered_dist.most_common(20)
+"""
+[(('from', 'the'), 428),
+ (('the', 'whale'), 369),
+ (('and', 'the'), 357),
+ (('with', 'the'), 308),
+ (('for', 'the'), 285),
+ (('into', 'the'), 246),
+ (('the', 'ship'), 235),
+ (('the', 'sea'), 223),
+ (('upon', 'the'), 216),
+ (('that', 'the'), 215),
+ (('all', 'the'), 198),
+ (('the', 'same'), 159),
+ (('the', 'Pequod'), 147),
+ (('the', 'other'), 135),
+ (('over', 'the'), 133),
+ (('and', 'then'), 129),
+ (('have', 'been'), 122),
+ (('Sperm', 'Whale'), 118),
+ (('the', 'boat'), 118),
+ (('had', 'been'), 115)]
+"""
+```
+Graficamos con `filtered_dist.plot(20)`.
+
+![Filtered dist](/images/filtered-freqdist.png)
+
+### Tri-gramas
+```py
+from nltk.util import ngrams
+md_trigrams = list(ngrams(text1, 3))
+fdist = FreqDist(md_trigrams)
+print(fdist.most_common(20))
+fdist.plot(20)
+"""
+[((',', 'and', 'the'), 187), (('don', "'", 't'), 103), (('of', 'the', 'whale'), 101), ((',', 'in', 'the'), 93), ((',', 'then', ','), 87), (('whale', "'", 's'), 81), (('.', 'It', 'was'), 81), (('ship', "'", 's'), 80), (('the', 'Sperm', 'Whale'), 77), ((',', 'as', 'if'), 76), (('he', "'", 's'), 76), (('Ahab', "'", 's'), 75), (('.', 'Now', ','), 74), (("'", 's', 'a'), 73), (("'", 's', 'the'), 72), (('that', "'", 's'), 69), ((',', 'as', 'the'), 68), (('the', 'sea', ','), 67), (('it', "'", 's'), 67), ((',', 'and', 'then'), 67)]
+"""
+```
+![Trigram](/images/trigrams-freqdist.png)
+
+Filtramos los resultados para evitar conectores y signos de puntuación.
+```py
+threshold = 2
+filtered_trigrams = [trigram for trigram in md_trigrams if len(trigram[0])>threshold and len(trigram[1])>threshold and len(trigram[2])>threshold]
+filtered_dist_trigrams = FreqDist(filtered_trigrams)
+filtered_dist_trigrams.most_common(20)
+"""
+[(('the', 'Sperm', 'Whale'), 77),
+ (('the', 'White', 'Whale'), 63),
+ (('the', 'old', 'man'), 32),
+ (('the', 'sperm', 'whale'), 30),
+ (('the', 'Right', 'Whale'), 25),
+ (('the', 'same', 'time'), 24),
+ (('for', 'the', 'time'), 24),
+ (('must', 'have', 'been'), 23),
+ (('into', 'the', 'sea'), 21),
+ (('now', 'and', 'then'), 20),
+ (('into', 'the', 'air'), 19),
+ (('down', 'into', 'the'), 18),
+ (('the', 'white', 'whale'), 18),
+ (('the', 'Pequod', 'was'), 17),
+ (('over', 'the', 'side'), 17),
+ (('from', 'the', 'whale'), 16),
+ (('all', 'the', 'time'), 16),
+ (('round', 'and', 'round'), 16),
+ (('from', 'the', 'ship'), 15),
+ (('and', 'all', 'the'), 14)]
+"""
+```
+Graficamos con `filtered_dist_trigrams.plot(20)`.
+![Filtered trigram](/images/filtered-trigram-freqdist.png)
+
+## Colocaciones en Python
+
+**Colocaciones**: Son secuencias de palabras que ocurren en textos y conversaciones con una frecuencia inusualmente alta. Existe evidencia estadística de que estas palabras ocurren con esa frecuencia inusualmente alta, y esto nos da la idea de que podemos construir algunos números, algunas métricas que nos permiten identificar de manera sistemática estas colocaciones.
+
+[NLTK Documentation](https://github.com/nltk/nltk/wiki#documentation)
+
+[NLTK Book](/files/nltk-doc.pdf)
+
+Para poder tener un indicio de esto, debemos usar el Pointwise Mutual Information (PMI) - Información Mutua Punto a Punto.
+
+![Fórmula PMI](/images/formula-pmi.png)
+
+Dado que el resultado de la división nos va a dar un número más pequeño que 1, la mayoría de los resultados nos va a dar negativos. Con el PMI buscamos los resultados más altos, o sea, los más cercanos a cero.
+
+En este sentido, los bigramas que tengan más posibilidades de ser colocaciones deben tener valores del PMI cercanos a cero y por lo tanto tener los valores menos negativos posibles o al menos es lo que podemos ver en este momento.
+
+## Colocaciones en gráficos de dispersión
+
+Nos encontramos con un pequeño obstaculo. Hay PMIs cercanos a cero que la frecuencia del bigrama es 1, o sea que aparecen una sola vez en el texto, esto no es bueno, porque podemos encontrar bigramas con más frecuencia de repetición. Para poder identificar colocaciones de lenguaje no solo debemos considerar la métrica del PMI, sino también la frecuencia del n-grama en sí mismo, para lo cual nos sugiere que debemos considerar 2 métricas, la frecuencia del bigrama en sí y la métrica PMI.
+
+**Creamos una nueva columna que contenga el logaritmo de la frecuencia de los bigramas.**
+```py
+df['PMI'] = df[['bigram_freq','word_0_freq','word_1_freq']].apply(lambda x: np.log2(x.values[0]/(x.values[1]*x.values[2])), axis = 1)
+df['log_bigram_freq'] = df['bigram_freq'].apply(lambda x: np.log2(x))
+df
+"""
+    bi-grams 	            word_0 	    word_1 	        bigram_freq 	word_0_freq 	word_1_freq 	PMI 	        log_bigram_freq
+0 	(and, prophesies) 	    and 	    prophesies      1 	            6024 	        1 	            -12.556506 	    0.000000
+1 	(lesson, which) 	    lesson 	    which 	        1 	            12 	            640 	        -12.906891 	    0.000000
+2 	(not, unshunned) 	    not 	    unshunned 	    1 	            1103 	        1 	            -10.107217 	    0.000000
+3 	(this, soliloquizer) 	this 	    soliloquizer 	1 	            1280 	        1 	            -10.321928 	    0.000000
+4 	(the, precise) 	        the      	precise 	    11 	            13721 	        19 	            -14.532594 	    3.459432
+"""
+```
+
+En el DF aplicamos el logaritmo sobre la frecuencia de aparición de la frecuencia de los bigramas, ¿Por qué hacemos esto? Porque el PMI en sí mismo ya es un valor que es el resultado de un logaritmo, y para que las 2 variables tengan la misma escala en el gráfico y el gráfico no se vea distorcionado es conveniente también aplicar logaritmo sobre la variable.
+
+### Librería Plotly interactiva
+
+Esta librería es extremadamente poderosa, pues, ofrece la posibilidad de crear gráficos interáctivos, en este caso, la librería nos ofrece la oportunidad de identificar las colocaciones dentro del libro Moby Dick.
+```py
+fig = px.scatter(x = df['PMI'].values, 
+                 y = df['log_bigram_freq'], 
+                 color = df['PMI']+df['log_bigram_freq'], 
+                 hover_name = df['bi-grams'].values, 
+                 width = 600, 
+                 height = 600, 
+                 labels= {'x':'PMI', 'y':'log (Bigram frequencies)'})
+fig.show()
+```
+
+![Plotly](/images/plotly.png)
+
+Podemos ver que la colocación más evidente es Moby Dick, y tiene total sentido, pues es el título del libro y uno de los personajes importantes, y más específicamente porque es un bigrama con una frecuencia de uso inusualmente alta en el lenguaje general. Las colocaciones sirven para identificar entonces, personas, lugares importantes para este caso literario identificar nombres propios, objetos y de esta manera empezar a asignar cierto tipo de etiquetas a palabras o expresiones que nos pueden dar información de elementos cruciales en el entendimiento del texto en sí mismo.
+
+## Filtros y colocaciones en NLTK
+
+### Medidas pre-construidas en NLTK
+
+* [Source code for nltk.metrics.association](http://www.nltk.org/_modules/nltk/metrics/association.html)
+
+Importamos una nueva librería y utilizamos nuevos métodos.
+* `nltk.collocations.BigramAssocMeasures()`: Este método permite usar las métricas, incluyendo la PMI que estuvimos trabajando.
+* `BigramCollocationFinder.from_words(text1)`: Método que permite que las palabras del texto 1 implemente una clase que nos va a ayudar a encontrar las colocaciones.
+```py
+from nltk.collocations import *
+bigram_measure = nltk.collocations.BigramAssocMeasures() 
+finder = BigramCollocationFinder.from_words(text1) 
+```
+
+Ahora, encontraremos las colocaciones usando NLTK.
+```py
+finder.apply_freq_filter(20)
+finder.nbest(bigram_measure.pmi, 10)
+"""
+[('Moby', 'Dick'),
+ ('Sperm', 'Whale'),
+ ('White', 'Whale'),
+ ('Right', 'Whale'),
+ ('Captain', 'Peleg'),
+ (',"', 'said'),
+ ('never', 'mind'),
+ ('!"', 'cried'),
+ ('no', 'means'),
+ ('each', 'other')]
+"""
+```
+
+### Textos en español
+
+Para trabajar con colocaciones en español es el mismo procedimiento que del inglés.
+```py
+nltk.download('cess_esp')
+corpus = nltk.corpus.cess_esp.sents()
+flatten_corpus = [w for l in corpus for w in l]
+finder = BigramCollocationFinder.from_documents(corpus)
+finder.apply_freq_filter(10)
+finder.nbest(bigram_measure.pmi, 10)
+"""
+[('señora', 'Aguirre'),
+ ('secretario', 'general'),
+ ('elecciones', 'generales'),
+ ('campaña', 'electoral'),
+ ('quiere', 'decir'),
+ ('Se', 'trata'),
+ ('segunda', 'vuelta'),
+ ('director', 'general'),
+ ('primer', 'ministro'),
+ ('primer', 'lugar')]
+"""
+```
+
+[Archivo Colab](https://colab.research.google.com/drive/1rc7KrNYglV14L0cVCLAfkl2HKCcZIfyt?usp=sharing)
+
+[Archivo local](/code/03_lenguaje_con_estadistica.ipynb)
+
+## Introducción a los recursos léxicos
+
+**¿Qué es un recurso léxico y como podemos usardo para nuestro procesamiento del leguaje en cuanto las tareas que se deben ejecutar?**
+
+Es una colección de palabras o frases que puede o no contener meta datos o información acerca de los elementos de esa colección.
+
+**¿Por qué es tan importante esto?**
+
+En lenguajes como el español hay palabras que pueden tener diferentes significados, que dependiendo del contexto en el cual esa palabra esta siendo usada y esta información se puede categorizar y estructurar dentro de lo que llamamos un recurso léxico.
+
+### ¿Cómo es?
+
+* Calle [verbo] conjugación del verbo callar. *Le puedes decir que se **calle** o me va a enloquecer...*
+* Calle [sustantivo] referencia al espacio público por donde hay transito. *Ten cuidado al cruzar la **calle** porque el semáforo no funciona...*
+
+La **categoría léxica** es determinar el uso o calificativo de la palabra en cuestión, si es verbo, sustantivo, adjetivo, adverbio. Y por último, el **significado** o **descripción** respecto al uso específico de esa palabra en cada uno de los casos.
+
+## Recursos léxicos en NLTK
+
+>Son colecciones de palabras o frases que tienen asociadas etiquetas o meta-informacion de algún tipo (POS tags, significados gramaticales, etc ...)
+
+**comentario**: POS (Part of Speech), también llamado etiquetado gramatical o etiquetado de palabras por categorias, consiste en etiquetar la categoria gramatical a la que pertence cada palabra en un volumen de texto, siendo las categorias:
+
+* Sustantivos
+* Adjetivos
+* Articulos
+* Pronombres
+* Verbos
+* Adverbios
+* Interjecciones
+* Preposiciones
+* Conjunciones
+
+En esta ocasión empezamos a usar el método stopwords de NLTK, stopwords es una lista de palabras inútiles del lenguaje, las cuales hay que filtrar para hacer un análisis NLP mucho más preciso y sin tanto ruido.
+
+```py
+# Vocabulario: Palabras únicas en un corpus
+vocab = sorted(set(text1))
+print(vocab[:20])
+"""
+['!', '!"', '!"--', "!'", '!\'"', '!)', '!)"', '!*', '!--', '!--"', "!--'", '"', '"\'', '"--', '"...', '";', '$', '&', "'", "',"]
+
+"""
+
+# Distribuciones: frecuencia de aparición
+word_freq = FreqDist(text1)
+# En cierto sentido, la distribución de frecuencia es un lexicón, porque la llave es la palabra y el valor es la información que se tiene de esa palabra.
+# Y es un lexicón enriquecido, porque contiene información de la palabra, no solo es la colección de la palabra.
+print(word_freq)
+# <FreqDist with 19317 samples and 260819 outcomes>
+
+# Stopwords: Palabras muy usadas en el lenguaje que usualmente son filtradas en un pipeline de NLP (useless words)
+stopwords.words('spanish')[:20]
+"""
+['de',
+ 'la',
+ 'que',
+ 'el',
+ 'en',
+ 'y',
+ 'a',
+ 'los',
+ 'del',
+ 'se',
+ 'las',
+ 'por',
+ 'un',
+ 'para',
+ 'con',
+ 'no',
+ 'una',
+ 'su',
+ 'al',
+ 'lo']
+"""
+```
+
+Para el procesamiento de texto, es relevante eliminar la cantidad de stopwords en el contenido del texto, si un texto tiene demasiadas stopwords, a lo mejor no es tan grande como pensaba que lo era inicialmente.
+```py
+def stopwords_percentage(text, lang):
+    stopwd = stopwords.words(lang)
+    content = [w for w in text if w.lower() not in stopwd]
+    return f'{round(len(content)/len(text)*100, 2)}%'
+
+# Analizando el libro de Moby Dick
+stopwords_percentage(text1, 'english')
+# '58.63%'
+```
+
+## NLTK para traducción de palabras
+
+Para esta clase usaremos la clase Swadesh. Swadesh sirve para comparar palabras y realizar traducciones.
+
+Importamos la librería.
+```py
+from nltk.corpus import swadesh
+
+print(swadesh.fileids()) # lista de abreviaciones de lenguajes disponibles
+# ['be', 'bg', 'bs', 'ca', 'cs', 'cu', 'de', 'en', 'es', 'fr', 'hr', 'it', 'la', 'mk', 'nl', 'pl', 'pt', 'ro', 'ru', 'sk', 'sl', 'sr', 'sw', 'uk']
+
+print(swadesh.words('en')[:20])
+# ['I', 'you (singular), thou', 'he', 'we', 'you (plural)', 'they', 'this', 'that', 'here', 'there', 'who', 'what', 'where', 'when', 'how', 'not', 'all', 'many', 'some', 'few']
+```
+
+### Realizando traducciones con Swadesh
+```py
+fr2es = swadesh.entries(['fr','es'])
+print(fr2es[:10])
+# [('je', 'yo'), ('tu, vous', 'tú, usted'), ('il', 'él'), ('nous', 'nosotros'), ('vous', 'vosotros, ustedes'), ('ils, elles', 'ellos, ellas'), ('ceci', 'este'), ('cela', 'ese, aquel'), ('ici', 'aquí, acá'), ('là', 'ahí, allí, allá')]
+
+translate = dict(fr2es)
+translate['chien']
+# 'perro'
+
+translate['jeter']
+# tirar
+```
+
+**Traduciendo del inglés**
+```py
+en2es = swadesh.entries(['en','es'])
+translate = dict(en2es)
+translate['dog']
+# perro
+```
+
+Ya con esto tenemos la capacidad de usar recursos léxicos que nos permiten traducir de un idioma específico a otro. **¿Cómo podemos usar esto de forma más interesante?** Podemos conectar esto con otros conceptos de clases previas, imagina que estamos haciendo procesamiento de texto en un idioma diferente al propio, y lo que se quiere es generar tokenizadores de esos textos, tokenizar las palabras, filtrar stopwords y luego con las palabras relevantes, saber cuáles son las más mencionadas.
+
