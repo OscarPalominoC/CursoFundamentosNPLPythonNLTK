@@ -35,6 +35,8 @@ Francisco Camacho
     * [Introducción a los recursos léxicos](#introducción-a-los-recursos-léxicos)
     * [Recursos léxicos en NLTK](#recursos-léxicos-en-nltk)
     * [NLTK para traducción de palabras](#nltk-para-traducción-de-palabras)
+    * [Introducción a WordNet](#introducción-a-wordnet)
+    * [Explorando WordNet](#explorando-wordnet)
 
 ---
 
@@ -723,3 +725,33 @@ Ya con esto tenemos la capacidad de usar recursos léxicos que nos permiten trad
 [Archivo Colab](https://colab.research.google.com/drive/1N-2fp7ku1V68kEMbpFU-CDyCjcqAPyNF?usp=sharing)
 
 [Archivo local](/code/04_recursos_lexicos.ipynb)
+
+## Introducción a WordNet
+
+>Es una base de datos con carácter léxico para el idioma inglés. Se compone por conjuntos de sinónimos (synsets),cada uno expresando un concepto diferente. Diferentes synsets se relacionan por su relación conceptual semántica ... WordNet reference, Princeton University
+
+Un Sysnset es un conjunto que agrupan varias palabras que pueden ser diferentes pero cuyo significado es el mismo.
+* Ejemplo: Carro, Automovil, Auto, Coche. **Definición**: Vehículo motorizado de cuatro ruedas,propulsado por un motor de combustión interna.
+
+![Jerarquía Wordnet](/images/jerarquia-wordnet.PNG)
+
+Un synset es un conjunto de palabras que son sinónimas o que se pueden generalizar con un concepto.
+
+**La idea del Wordnet es tener una estructura tipo grafo.**
+
+Un synset se relaciona con otro synset dependiendo de la generalidad del concepto.
+
+El synset artefacto es un sysnset cuyo concepto o definición es más general que la de "vehículo motorizado".
+
+**Conceptos claves:**
+
+* **Hiperonimo**: Es un synset mas generalizado que puede abarcar varias palabras. El ejemplo de la clase es que Artefacto es un hiperónimo de vehículo motorizado.
+* **Hiponimo**: Es un synset que no es general sino más específico.
+
+## Explorando WordNet
+
+* [WordNet Lecture](https://sp1718.github.io/wordnet_lecture.pdf)
+* [What is WordNet?](https://wordnet.princeton.edu)
+* [WordNet Interface NLTK](http://www.nltk.org/howto/wordnet.html)
+* [LAS-WordNet](https://www.datos.gov.co/Ciencia-Tecnolog-a-e-Innovaci-n/LAS-WordNet-una-WordNet-para-el-espa-ol-obtenida-c/8z8d-85m7)
+
