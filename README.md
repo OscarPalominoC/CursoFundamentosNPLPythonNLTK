@@ -37,6 +37,10 @@ Francisco Camacho
     * [NLTK para traducción de palabras](#nltk-para-traducción-de-palabras)
     * [Introducción a WordNet](#introducción-a-wordnet)
     * [Explorando WordNet](#explorando-wordnet)
+    * [Similitud Semantica con WordNet](#similitud-semantica-con-wordnet)
+    * [Procesamiento de texto plano desde Web](#procesamiento-de-texto-plano-desde-web)
+    * [Usando código estructurado: conexión de Drive a Google Colab](#usando-código-estructurado-conexión-de-drive-a-google-colab)
+    * [Usando código estructurado: Funciones externas](#usando-código-estructurado-funciones-externas)
 
 ---
 
@@ -754,4 +758,88 @@ El synset artefacto es un sysnset cuyo concepto o definición es más general qu
 * [What is WordNet?](https://wordnet.princeton.edu)
 * [WordNet Interface NLTK](http://www.nltk.org/howto/wordnet.html)
 * [LAS-WordNet](https://www.datos.gov.co/Ciencia-Tecnolog-a-e-Innovaci-n/LAS-WordNet-una-WordNet-para-el-espa-ol-obtenida-c/8z8d-85m7)
+
+## Similitud Semantica con WordNet
+
+Ya existen funciones en wordnet que nos permiten medir distancias en cuanto a la similitud semántica entre palabras con base en los synsets o conceptos de sinónimos que están asociados a esas palabras, las cuales quiero calcular la medida de la distancia.
+
+[Archivo Colab generado](https://colab.research.google.com/drive/1zdykZKOO7F-zrbUi2KHYs-IBZanSsRwx?usp=sharing)
+
+[Archivo local](/code/05_wordnet.ipynb)
+
+## Procesamiento de texto plano desde Web
+
+En esta clase usamos la librería requests, para recibir información directa desde la web.
+
+[Archivo Colab generado](https://colab.research.google.com/drive/1U0MnJM5qF0lszG5cptBVCPjWwqfeLMva?usp=sharing)
+
+[Archivo local](/code/06_processing_raw_text.ipynb)
+
+## Usando código estructurado: conexión de Drive a Google Colab
+```
+from google.colab import drive
+drive.mount('/content/drive/')
+
+%cd /content/drive/MyDrive/CursoFundamentosNPLP/
+%ls
+```
+
+## Usando código estructurado: Funciones externas
+
+Las funciones externas son código con extensiones .py, podemos crear los archivos desde google colab utilizando la siguiente estructura:
+```
+!touch path+name
+```
+El signo de admiración es un 'magic' utilizado en Python para indicar que se van a utilizar comandos de la terminal. Para efectos del curso se creo un archivo .py de nombre `read.py`, que contiene el siguiente código:
+```py
+import re
+
+def get_text(file):
+    text= open(file).read()
+    text = re.sub(r'<.*?>', ' ', text)
+    text = re.sub(r'\s+', ' ', text)
+    return text
+```
+Ahora, no podemos simplemente decir `import read`, no tenemos acceso aún al archivo porque no está en el path de python de Google, para solucionar esto, tenemos que llamar a la librería sys y añadirlo al Path.
+```py
+import sys
+
+sys.path
+"""
+['',
+ '/content',
+ '/env/python',
+ '/usr/lib/python37.zip',
+ '/usr/lib/python3.7',
+ '/usr/lib/python3.7/lib-dynload',
+ '/usr/local/lib/python3.7/dist-packages',
+ '/usr/lib/python3/dist-packages',
+ '/usr/local/lib/python3.7/dist-packages/IPython/extensions',
+ '/root/.ipython']
+"""
+# Como es una lista podemos usar append para añadir el path.
+sys.path.append('/content/drive/MyDrive/CursoFundamentosNPLP/')
+sys.path
+"""
+['',
+ '/content',
+ '/env/python',
+ '/usr/lib/python37.zip',
+ '/usr/lib/python3.7',
+ '/usr/lib/python3.7/lib-dynload',
+ '/usr/local/lib/python3.7/dist-packages',
+ '/usr/lib/python3/dist-packages',
+ '/usr/local/lib/python3.7/dist-packages/IPython/extensions',
+ '/root/.ipython',
+ '/content/drive/MyDrive/CursoFundamentosNPLP/']
+"""
+```
+Y ahora si podemos usar el archivo `read.py`.
+```py
+import read
+
+read.get_text('book.txt')
+```
+
+[Archivo Google Colab](https://colab.research.google.com/drive/1MQn-_jGUyJgGZKJnNEcO3d4FfriYfj3c?usp=sharing)
 
